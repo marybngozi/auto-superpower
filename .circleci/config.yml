@@ -287,6 +287,7 @@ jobs:
   deploy-frontend:
     docker:
       # Docker image here that supports AWS CLI
+      - image: cimg/base:stable
     steps:
       # Checkout code from git
       - run:
@@ -308,10 +309,21 @@ jobs:
   deploy-backend:
     docker:
       # Docker image here that supports Ansible
+      - image: cimg/base:stable
     steps:
       # Checkout code from git
       # Add ssh keys with fingerprint
       # attach workspace
+      - checkout
+      - install_awscli
+      - install_ansible
+      - install_nodejs
+      - add_ssh_keys:
+          fingerprints: ["75:42:17:5a:17:8b:ac:f7:f3:c9:86:57:0b:84:78:ea"]
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Install dependencies
           command: |
@@ -325,6 +337,7 @@ jobs:
   smoke-test:
     docker:
       # Lightweight Docker image
+      - image: cimg/base:stable
     steps:
       # Checkout code from git
       - run:
@@ -348,8 +361,12 @@ jobs:
   cloudfront-update:
     docker:
       # Docker image here that supports AWS CLI
+      - image: cimg/base:stable
     steps:
       # Checkout code from git
+      - checkout
+      - install_awscli
+      - install_nodejs
       - run:
           name: Install dependencies
           command: |
