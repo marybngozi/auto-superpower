@@ -71,7 +71,7 @@ commands:
           # Add when this will run
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = 1
+            SUCCESS = $(curl --insecure https://kvdb.io/83CNiU9gMoUuiXdrcjS2P1/migration_<< parameters.workflow_ID >>)
             if(( $SUCCESS==1 )); 
             then
               cd ~/project/backend
@@ -283,6 +283,10 @@ jobs:
     docker:
       # Docker image here that supports NodeJS
       - image: cimg/node:13.8.0
+    parameters:
+      workflow_id:
+        type: string
+        default: "${CIRCLE_WORKFLOW_ID:0:7}"
     steps:
       # Checkout code from git
       - checkout
@@ -299,9 +303,17 @@ jobs:
       - run:
           name: Send migration results to memstash
           command: |
-            # Your code here
-            exit 1
+            # Your code here [83CNiU9gMoUuiXdrcjS2P1]
+            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+            then
+              echo "Going to KVDB store"
+              curl --insecure https://kvdb.io/83CNiU9gMoUuiXdrcjS2P1/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+            fi
       # Here's where you will add some code to rollback on failure
+      - destroy-environment:
+          workflow_id: <<parameters.workflow_id>>
+      - revert-migrations:
+          workflow_id: <<parameters.workflow_id>>
 
   deploy-frontend:
     docker:
@@ -435,8 +447,8 @@ workflows:
               only: [master]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
-      # - run-migrations:
-      #     requires: [configure-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
       # - deploy-frontend:
       #     requires: [run-migrations]
       # - deploy-backend:
