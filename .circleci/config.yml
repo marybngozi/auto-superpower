@@ -341,51 +341,27 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update tar gzip nodejs npm ansible curl aws-cli
-      # - run:
-      #     name: package backend
-      #     command: |
-      #       cd backend
-      #       npm install
-      #       npm run build
-      #       tar -czf artifact.tar.gz dist/* package*
-      #       cd ..
-      #       cp backend/artifact.tar.gz .circleci/ansible/roles/deploy/files
-      # - run:
-      #     name: Deploy backend
-      #     command: |
-      #       export TYPEORM_MIGRATIONS_DIR=./migrations
-      #       export TYPEORM_ENTITIES=./modules/domain/**/*.entity{.ts,.js}
-      #       export TYPEORM_MIGRATIONS=./migrations/*.ts
-      #       cd .circleci/ansible
-      #       echo "Contents  of the inventory.txt file is -------"
-      #       cat inventory.txt
-      #       ansible-playbook -i inventory.txt deploy-backend.yml
+            apk add --update --no-cache tar gzip nodejs npm aws-cli ansible
       - run:
-          name: package-deploy backend
+          name: Package Backend
           command: |
             cd backend
             npm i
-            echo ENVIRONMENT=production > ".env"
-            echo TYPEORM_CONNECTION=postgres >> ".env"
-            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> ".env"
-            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> ".env"
-            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> ".env"
-            echo NODE_ENV=production >> ".env"
-            echo TYPEORM_HOST=$TYPEORM_HOST >> ".env"
-            echo TYPEORM_PORT=$TYPEORM_PORT >> ".env"
-            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> ".env"
-            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
-            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
             npm run build
             cd ..
-            tar -C backend -czvf artifact.tar.gz .
-            tree -afC /root/project/.circleci -I *node_modules*
+
+            # Zip the directory
+            tar -C backend -czvf build-artifact.tar.gz .
             mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
-            mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
+            mv build-artifact.tar.gz .circleci/ansible/roles/deploy/files/build-artifact.tar.gz
+      - run:
+          name: Deploy backend
+          command: |
             cd .circleci/ansible
-            echo "Contents of the inventory.txt file is ------$(tail -1 inventory.txt)"
+            echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
+
+            echo "Deploying backend"
             ansible-playbook -i inventory.txt deploy-backend.yml
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
