@@ -33,7 +33,7 @@ commands:
     steps:
       - run:
           name: Revert migrations
-          # Add when this will run
+          when: on_fail
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
             SUCCESS=$(curl --insecure https://kvdb.io/83CNiU9gMoUuiXdrcjS2P1/migration_<<parameters.workflow_id>>)
@@ -341,7 +341,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update --no-cache tar gzip nodejs npm aws-cli ansible
+            apk add --update --no-cache curl tar gzip nodejs npm aws-cli ansible
       - run:
           name: Package Backend
           command: |
@@ -391,13 +391,10 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
+
             # if curl -s http://google.com
-            if curl -s $API_URL/api/status | grep "ok"
-            then
-                exit 0
-            else
-                exit 1
-            fi
+            if [[ 'ok' =~ $(curl -s --connect-timeout 5 http://${API_URL}/api/status | grep -o ok) ]];then return 0 else return 1;fi
+
       - run:
           name: Frontend smoke test.
           command: |
