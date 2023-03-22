@@ -453,8 +453,6 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
-      - attach_workspace:
-          at: ~/
       - run: yum install -y tar gzip
       - run:
           name: Get old stack workflow id
