@@ -452,6 +452,7 @@ jobs:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   cleanup:
+    # run clean again
     docker:
       # Docker image here
       - image: amazon/aws-cli
