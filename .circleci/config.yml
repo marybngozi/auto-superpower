@@ -378,13 +378,15 @@ jobs:
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
             npm run build
-            npm run prestart:prod
             cd ..
-            echo "Contents  of the inventory.txt file is -------"
-            cat .circleci/ansible/inventory1.txt
-            tar -cvf backend.tar backend
-            cp backend.tar ~/backend.tar
-            ansible-playbook -i .circleci/ansible/inventory1.txt .circleci/ansible/deploy-backend.yml
+            tar -C backend -czvf artifact.tar.gz .
+            tree -afC /root/project/.circleci -I *node_modules*
+            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+            mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
+            cd .circleci/ansible
+            echo "Contents of the inventory.txt file is ------$(tail -1 inventory.txt)"
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
