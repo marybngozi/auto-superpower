@@ -393,8 +393,13 @@ jobs:
             echo "${API_URL}"
 
             # if curl -s http://google.com
-            if [[ 'ok' =~ $(curl -s --connect-timeout 5 http://${API_URL}/api/status | grep -o ok) ]];then return 0 else return 1;fi
-
+            # if [[ 'ok' =~ $(curl -s --connect-timeout 5 http://${API_URL}/api/status | grep -o ok) ]];then return 0 else return 1;fi
+            if curl -s --connect-timeout 5 http://${API_URL}/api/status | grep -o ok
+            then
+              exit 0
+            else
+              exit 1
+            fi
       - run:
           name: Frontend smoke test.
           command: |
