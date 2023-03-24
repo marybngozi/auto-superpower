@@ -391,13 +391,9 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
-            # if curl -s --connect-timeout 5 http://${API_URL}/api/status | grep -o ok
-            if curl -s "${API_URL}/api/status" | grep "ok"
-            then
-              exit 0
-            else
-              exit 1
-            fi
+            sleep 20
+            if [[ 'ok' =~ $(curl -s --connect-timeout 5 http://${BACKEND_IP}:3030/api/status | grep -o ok) ]];then return 0 else return 1;fi
+            curl -s http://${BACKEND_IP}:3030/api/status
       - run:
           name: Frontend smoke test.
           command: |
