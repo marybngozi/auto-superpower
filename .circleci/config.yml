@@ -405,7 +405,7 @@ jobs:
             echo ${UI_URL}
             if curl -s $UI_URL | grep "Welcome"
             then
-              exit 1
+              exit 0
             else
               exit 1
             fi
