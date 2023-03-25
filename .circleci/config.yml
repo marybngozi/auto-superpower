@@ -346,23 +346,20 @@ jobs:
           name: Package Backend
           command: |
             cd backend
-            npm i
             npm run build
+            tar -czf artifact.tar.gz dist/* package*
             cd ..
-
-            # Zip the directory
-            tar -C backend -czvf build-artifact.tar.gz .
             mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
-            mv build-artifact.tar.gz .circleci/ansible/roles/deploy/files/build-artifact.tar.gz
+            cp backend/artifact.tar.gz .circleci/ansible/roles/deploy/files
       - run:
           name: Deploy backend
           command: |
+            export TYPEORM_MIGRATIONS_DIR=./migrations
+            export TYPEORM_ENTITIES=./modules/domain/**/*.entity{.ts,.js}
+            export TYPEORM_MIGRATIONS=./migrations/*.ts
             cd .circleci/ansible
-            echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
-
-            echo "Deploying backend"
-            ansible-playbook -i inventory.txt deploy-backend.yml
+            ansible-playbook -vvv -i inventory.txt deploy-backend.yml
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -391,12 +388,11 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
-            sleep 20
-            if curl "${API_URL}/api/status" | grep "ok"
+            if curl --connect-timeout 60 $API_URL/api/status | grep "ok"
             then
-              return 0
+              exit 0
             else
-              return 1
+              exit 1
             fi
 
       - run:
