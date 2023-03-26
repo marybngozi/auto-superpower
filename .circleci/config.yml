@@ -289,6 +289,7 @@ jobs:
           command: |
             cd backend
             npm install
+            echo "======Migrations output====" > migrations_dump.txt
             npm run migrations > migrations_dump.txt
             cat migrations_dump.txt
       - run:
